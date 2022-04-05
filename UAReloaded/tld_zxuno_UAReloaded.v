@@ -158,8 +158,8 @@ module tld_zxuno_UAReloaded (
    assign sram_addr = sram_addr_int[19:0];
   `endif 
   
-	wire [8:0] audio_left_i2s;
-	wire [8:0] audio_right_i2s;
+	wire [15:0] audio_left_i2s;
+	wire [15:0] audio_right_i2s;
    
 //	wire midi_o;
 //   assing midi_out =	~ midi_o;
@@ -285,9 +285,9 @@ module tld_zxuno_UAReloaded (
 //	   assign uart_reset = 1'b0;
 //	`endif 
    
-   assign r = {ro,r0[5:4]};
-   assign g = {go,g0[5:4]};
-   assign b = {bo,b0[5:4]};
+   assign r = {ro,ro[5:4]};
+   assign g = {go,go[5:4]};
+   assign b = {bo,bo[5:4]};
 	
 	audio_top audio_top (  // Audio Output I2S
 		.clk_50MHz		(sysclk), // I should be clk50mhz, but it makes inteferences
@@ -295,8 +295,8 @@ module tld_zxuno_UAReloaded (
 		.dac_LRCK		(LRCLK),
 		.dac_SCLK		(SCLK),
 		.dac_SDIN		(SDIN),
-		.L_data			({audio_left_i2s,7'b0000000}),
-		.R_data			({audio_right_i2s,7'b0000000})
+		.L_data			(audio_left_i2s),
+		.R_data			(audio_right_i2s)
 	); 
    
 endmodule

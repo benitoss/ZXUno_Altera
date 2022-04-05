@@ -22,38 +22,6 @@
 //
 //    Any distributed copy of this file must keep this notice intact.
 
-`define MSBI 8 // Most significant Bit of DAC input
-
-//This is a Delta-Sigma Digital to Analog Converter
-module dac (DACout, DACin, Clk, Reset);
-	output DACout; // This is the average output that feeds low pass filter
-	input [`MSBI:0] DACin; // DAC input (excess 2**MSBI)
-	input Clk;
-	input Reset;
-
-	reg DACout; // for optimum performance, ensure that this ff is in IOB
-	reg [`MSBI+2:0] DeltaAdder; // Output of Delta adder
-	reg [`MSBI+2:0] SigmaAdder; // Output of Sigma adder
-	reg [`MSBI+2:0] SigmaLatch = 1'b1 << (`MSBI+1); // Latches output of Sigma adder
-	reg [`MSBI+2:0] DeltaB; // B input of Delta adder
-
-	always @(SigmaLatch) DeltaB = {SigmaLatch[`MSBI+2], SigmaLatch[`MSBI+2]} << (`MSBI+1);
-	always @(DACin or DeltaB) DeltaAdder = DACin + DeltaB;
-	always @(DeltaAdder or SigmaLatch) SigmaAdder = DeltaAdder + SigmaLatch;
-	always @(posedge Clk)
-	begin
-		if(Reset)
-		begin
-			SigmaLatch <= #1 1'b1 << (`MSBI+1);
-			DACout <= #1 1'b0;
-		end
-		else
-		begin
-			SigmaLatch <= #1 SigmaAdder;
-			DACout <= #1 SigmaLatch[`MSBI+2];
-		end
-	end
-endmodule
 
 
 /*
@@ -109,8 +77,8 @@ module panner_and_mixer (
   // --- OUTPUTs ---
   output wire output_left,
   output wire output_right,
-  output reg [8:0] left_i2s,
-  output reg [8:0] right_i2s
+  output reg [15:0] left_i2s,
+  output reg [15:0] right_i2s
   );
 
 `include "config.vh"
@@ -151,35 +119,11 @@ module panner_and_mixer (
   reg [10:0] mixleft = 11'h000;
   reg [10:0] mixright = 11'h000;
   reg [8:0] left, right;
-//  reg [7:0] compressor[0:2047];
-//  initial $readmemh ("curva_compress.hex", compressor);
-  
-//  always @(posedge clk) begin
-////    mixleft  <= ((mixer[7])? {4'b0000,ay1_cha[7:1]} + {4'b0000,ay2_cha[7:1]} : 11'h000 ) +
-////                ((mixer[5])? {4'b0000,ay1_chb[7:1]} + {4'b0000,ay2_chb[7:1]} : 11'h000 ) +
-////                ((mixer[3])? {4'b0000,ay1_chc[7:1]} + {4'b0000,ay2_chc[7:1]} : 11'h000 ) +
-////                ((mixer[1])? {3'b000,beeper} + midi_left[15:5] + {{3{specdrum_left[7]}},specdrum_left}: 11'h000 );
-////    mixright <= ((mixer[6])? {4'b0000,ay1_cha[7:1]} + {4'b0000,ay2_cha[7:1]} : 11'h000 ) +
-////                ((mixer[4])? {4'b0000,ay1_chb[7:1]} + {4'b0000,ay2_chb[7:1]} : 11'h000 ) +
-////                ((mixer[2])? {4'b0000,ay1_chc[7:1]} + {4'b0000,ay2_chc[7:1]} : 11'h000 ) +
-////                ((mixer[0])? {3'b000,beeper} + midi_right[15:5] + {{3{specdrum_right[7]}},specdrum_right}: 11'h000 );
-//    mixleft  <= ((mixer[7])? {3'b000,ay1_cha} + {3'b000,ay2_cha} : 11'h000 ) +
-//                ((mixer[5])? {3'b000,ay1_chb} + {3'b000,ay2_chb} : 11'h000 ) +
-//                ((mixer[3])? {3'b000,ay1_chc} + {3'b000,ay2_chc} : 11'h000 ) +
-//                ((mixer[1])? {2'b00,beeper,beeper[7]} + midi_left[15:5] + {specdrum_left[7],specdrum_left,2'b00}: 11'h000 );
-//    mixright <= ((mixer[6])? {3'b000,ay1_cha} + {3'b000,ay2_cha} : 11'h000 ) +
-//                ((mixer[4])? {3'b000,ay1_chb} + {3'b000,ay2_chb} : 11'h000 ) +
-//                ((mixer[2])? {3'b000,ay1_chc} + {3'b000,ay2_chc} : 11'h000 ) +
-//                ((mixer[0])? {2'b00,beeper,beeper[7]} + midi_right[15:5] + {specdrum_right[7],specdrum_right,2'b00}: 11'h000 );
-//    left <= compressor[mixleft];
-//    right <= compressor[mixright];
-//  end
 
   reg [10:0] ay1_cha_signed, ay1_chb_signed, ay1_chc_signed;
   reg [10:0] ay2_cha_signed, ay2_chb_signed, ay2_chc_signed;
   reg [10:0] beeper_signed, specdrum_signed;
-  reg [10:0] midi_left_signed, midi_right_signed;
-  reg [10:0] saa_left_signed, saa_right_signed;
+  reg [15:0] saa_left_signed, saa_right_signed;
   always @(posedge clk) begin
     // extender a 11 bits
     ay1_cha_signed  <= {3'b000, ay1_cha};
@@ -190,38 +134,70 @@ module panner_and_mixer (
     ay2_chc_signed  <= {3'b000, ay2_chc};
     beeper_signed   <= {3'b000, beeper};
     specdrum_signed <= {2'b00, specdrum, specdrum[7]};
-    midi_left_signed <= midi_left[15:5] ^ 11'b10000000000;
-    midi_right_signed <= midi_right[15:5] ^ 11'b10000000000;
-	saa_left_signed  <= {1'b0, saa_left, 2'b00};
+	 saa_left_signed  <= {1'b0, saa_left, 2'b00};
     saa_right_signed <= {1'b0, saa_right, 2'b00};
     
     mixleft  <= ((mixer[7])? ay1_cha_signed + ay2_cha_signed : 11'h000 ) +
                 ((mixer[5])? ay1_chb_signed + ay2_chb_signed : 11'h000 ) +
                 ((mixer[3])? ay1_chc_signed + ay2_chc_signed : 11'h000 ) +
-                ((mixer[1])? beeper_signed + midi_left_signed + specdrum_signed + saa_left_signed: 11'h000 );
+                ((mixer[1])? beeper_signed + specdrum_signed + saa_left_signed: 11'h000 );
     mixright <= ((mixer[6])? ay1_cha_signed + ay2_cha_signed : 11'h000 ) +
                 ((mixer[4])? ay1_chb_signed + ay2_chb_signed : 11'h000 ) +
                 ((mixer[2])? ay1_chc_signed + ay2_chc_signed : 11'h000 ) +
-                ((mixer[0])? beeper_signed + midi_right_signed + specdrum_signed + saa_right_signed: 11'h000 );
+                ((mixer[0])? beeper_signed  + specdrum_signed + saa_right_signed: 11'h000 );
     left <= mixleft[10:2];
     right <= mixright[10:2];
 	
-	left_i2s <= mixleft[10:2];
-    right_i2s <= mixright[10:2];
   end
 
-   // DACs
-	dac audio_dac_left (
-		.DACout(output_left),
-		.DACin(left),
-		.Clk(clk),
-		.Reset(!mrst_n)
-		);
-   
-	dac audio_dac_right (
-		.DACout(output_right),
-		.DACin(right),
-		.Clk(clk),
-		.Reset(!mrst_n)
-		);
+  
+// Audio mix reimplementation
+ 
+
+
+ 
+// audio output processing
+wire [15:0] audio_mix_l = {1'b0, mixleft ,  mixleft[10:7]};
+wire [15:0] audio_mix_r = {1'b0, mixright, mixright[10:7]};
+
+
+reg [15:0] aud_l, aud_r;
+always @(posedge clk) begin
+	reg [15:0] old_l0, old_l1, old_r0, old_r1;
+	
+	old_l0 <= audio_mix_l;
+	old_l1 <= old_l0;
+	if(old_l0 == old_l1) aud_l <= old_l1;
+
+	old_r0 <= audio_mix_r;
+	old_r1 <= old_r0;
+	if(old_r0 == old_r1) aud_r <= old_r1;
+end
+
+always @(posedge clk) begin
+	reg [16:0] tmp_l, tmp_r;
+
+	tmp_l <= {1'b0, aud_l} +  {midi_left[15] ,midi_left};
+	tmp_r <= {1'b0, aud_r} +  {midi_right[15],midi_right};
+
+	// clamp the output
+	left_i2s  <= (^tmp_l[16:15]) ? {tmp_l[16], {15{tmp_l[15]}}} : tmp_l[15:0];
+	right_i2s <= (^tmp_r[16:15]) ? {tmp_r[16], {15{tmp_r[15]}}} : tmp_r[15:0];
+end
+
+
+dac_dsm2v audio_dac_left(
+   .clock_i (clk),
+	.reset_i (!mrst_n),
+	.dac_i   (left_i2s),
+	.dac_o   (output_left)
+);
+
+dac_dsm2v audio_dac_right(
+   .clock_i (clk),
+	.reset_i (!mrst_n),
+	.dac_i   (right_i2s),
+	.dac_o   (output_right)
+);
+ 
 endmodule

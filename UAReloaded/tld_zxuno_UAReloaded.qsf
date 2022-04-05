@@ -33,7 +33,7 @@ set_global_assignment -name DEVICE EP4CE55F23C8
 set_global_assignment -name TOP_LEVEL_ENTITY tld_zxuno_UAReloaded
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "10:46:23  OCTOBER 14, 2013"
-set_global_assignment -name LAST_QUARTUS_VERSION "17.0.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "21.1.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -206,10 +206,10 @@ set_location_assignment PIN_E22 -to SCLK
 set_location_assignment PIN_F22 -to LRCLK
 set_location_assignment PIN_J22 -to SDIN
 
-set_location_assignment PIN_A13 -to midi_out
-set_location_assignment PIN_C15 -to wsbd
-set_location_assignment PIN_C13 -to dabd
-set_location_assignment PIN_A14 -to clkbd
+set_location_assignment PIN_A17 -to midi_out
+set_location_assignment PIN_A19 -to wsbd
+set_location_assignment PIN_A16 -to dabd
+set_location_assignment PIN_A18 -to clkbd
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to wsbd
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to dabd
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to clkbd
@@ -264,7 +264,7 @@ set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to joy2fire2
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to joy2fire3
 
 #select para gamepad megadrive.
-set_location_assignment PIN_A15 -to joyselect 
+set_location_assignment PIN_A15 -to joyselect
 
 
 
@@ -284,6 +284,7 @@ set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
 
+set_global_assignment -name VHDL_FILE ../common/dac_dsm2v.vhd
 set_global_assignment -name VERILOG_FILE ../common/monochrome_rgb.v
 set_global_assignment -name VERILOG_FILE ../common/vga_scandoubler_18bits.v
 set_global_assignment -name VERILOG_FILE ../common/saa1099s.v

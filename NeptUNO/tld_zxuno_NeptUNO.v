@@ -148,8 +148,8 @@ module tld_zxuno_NeptUNO (
    wire [20:0] sram_addr_int;
    assign sram_addr = sram_addr_int[19:0];
 	
-	wire [8:0] audio_left_i2s;
-	wire [8:0] audio_right_i2s;
+	wire [15:0] audio_left_i2s;
+	wire [15:0] audio_right_i2s;
    
 //	wire midi_o;
 //   assing midi_out =	~ midi_o;
@@ -296,8 +296,8 @@ module tld_zxuno_NeptUNO (
 		.dac_LRCK		(LRCLK),
 		.dac_SCLK		(SCLK),
 		.dac_SDIN		(SDIN),
-		.L_data			({audio_left_i2s,7'b0000000}),
-		.R_data			({audio_right_i2s,7'b0000000})
+		.L_data			(audio_left_i2s),
+		.R_data			(audio_right_i2s)
 	); 
 
 	
