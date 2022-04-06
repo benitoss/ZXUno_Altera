@@ -50,8 +50,8 @@ module zxuno (
   output wire audio_out_left,
   output wire audio_out_right,
   
-  output wire [8:0] left,
-  output wire [8:0] right,
+  output wire [15:0] left,
+  output wire [15:0] right,
   
   // MIDI
   output wire midi_out,
