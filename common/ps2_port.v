@@ -232,7 +232,7 @@ module ps2_host_to_kb (
                 if (ps2clknedge) begin
                     timeoutcnt <= 24'h000000;
                     shiftreg <= {1'b0, shiftreg[7:1]};
-                    cntbits <= cntbits + 1;
+                    cntbits <= cntbits + 1'd1;
                     if (cntbits == 3'd7)
                         state <= `SENDPARITY;
                 end
@@ -260,7 +260,7 @@ module ps2_host_to_kb (
                 timeoutcnt <= 24'h000000;
             end
             default: begin
-                timeoutcnt <= timeoutcnt + 1;
+                timeoutcnt <= timeoutcnt + 1'd1;
                 if (timeoutcnt == 24'hFFFFFF && state != `SENDFINISHED) begin
                     error <= 1'b1;
                     state <= `SENDFINISHED;

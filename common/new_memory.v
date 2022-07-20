@@ -79,12 +79,13 @@ module new_memory (
    output wire [7:0] data_to_pzx,
    input wire write_data_pzx,
 
-	
-	output wire [20:0] sram_addr,
-   inout wire [7:0] sram_data,
-   output wire sram_we_n
-	
-   );
+   output wire        ram_rfsh_n,
+   output wire        ram_rd_n,
+   output wire        ram_wr_n,
+   output wire [20:0] ram_a,
+   input  wire [ 7:0] ram_d,
+   output wire [ 7:0] ram_q
+);
 
 `include "config.vh"
 
@@ -473,20 +474,21 @@ module new_memory (
       .data_from_pzx(data_from_pzx),
       .data_to_pzx(data_to_pzx),
       .write_data_pzx(write_data_pzx),
-            
-	   .a(sram_addr),  
-      .d(sram_data),
-      .we_n(sram_we_n)
 
-      );
+      .a(ram_a),
+      .d(ram_d),
+      .q(ram_q),
+      .we_n(ram_wr_n)
+   );
+assign ram_rd_n = mreq_n | rd_n;
+assign ram_rfsh_n = mreq_n | rfsh_n;
 
    rom boot_rom (
       .clk(clk),
       .a(a[13:0]),
       .dout(bootrom_dout)
-    );    
+    );
 
-	 
    // Elecci�n del dato a entregar a la CPU
    always @* begin
       if (!oe_bootrom_n) begin
@@ -537,7 +539,8 @@ module sram_and_mirror (
     output wire [7:0] data_to_pzx,
 
   	 output wire [20:0] a,    // SRAM addr bus
-    inout wire [7:0] d,      // SRAM bidirectional data bus
+    input  wire [7:0] d,      // SRAM bidirectional data bus
+    output wire [7:0] q,      // SRAM bidirectional data bus
     output wire we_n         // SRAM WE enable
 	 
     );
@@ -582,7 +585,7 @@ module sram_and_mirror (
     assign we_n = (enable_pzx)? ~write_data_pzx : we2_n & we2_n_dly;  // pulso de escritura ligeramente ensenchado
     assign dout2 = (a2[20:16] == 5'b00001 && a2[14] == 1'b1)? data_from_bram : d;
     assign data_to_pzx = d;
-    assign d = (we2_n_dly == 1'b0 && write_data_pzx == 1'b0)? din2 :  // dejo medio ciclo de reloj a Z antes de poner el dato
+    assign q = (we2_n_dly == 1'b0 && write_data_pzx == 1'b0)? din2 :  // dejo medio ciclo de reloj a Z antes de poner el dato
                (enable_pzx == 1'b1 && write_data_pzx == 1'b1)? data_from_pzx :
                8'hZZ;	
 	
@@ -592,7 +595,7 @@ module sram_and_mirror (
     assign we_n = we2_n & we2_n_dly;
 	 assign dout2 = (a2[20:16] == 5'b00001 && a2[14] == 1'b1)? data_from_bram : d;
     assign data_to_pzx = 8'h00;
-    assign d = (we2_n_dly == 1'b0)? din2 : 8'hZZ;
+    assign q = (we2_n_dly == 1'b0)? din2 : 8'hZZ;
 	 
 `endif               
 endmodule

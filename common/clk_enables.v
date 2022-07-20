@@ -73,32 +73,16 @@ module clk_enables (
 //  assign clk35en_n = divclk[23] | divclk[11];
 //  assign clk175en  = divclk[0];
 
-`ifdef CPU_TURBO_OPTION  
-  always @* begin
-    casez (cpu_speed[2:0])
-      3'b1?? : clkcpu_enable = 1'b1;
-      3'b000 : clkcpu_enable = clk35en && !CPUContention;
-      3'b001 : clkcpu_enable = clk7en;
-      3'b010 : clkcpu_enable = clk14en;
-      3'b011 : clkcpu_enable = 1'b1;
-    endcase
-  end
+//  always @* begin
+//    casez (cpu_speed[2:0])
+//      3'b1?? : clkcpu_enable = 1'b1;
+//      3'b000 : clkcpu_enable = clk35en && !CPUContention;
+//      3'b001 : clkcpu_enable = clk7en;
+//      3'b010 : clkcpu_enable = clk14en;
+//      3'b011 : clkcpu_enable = 1'b1;
+//    endcase
+//  end
 
-`elsif CPU_SDRAM_SLOW_OPTION
- always @* begin
-    clkcpu_enable = clk35en && !CPUContention;
-    /* casez (cpu_speed[2:0])
-      3'b1?? : clkcpu_enable = clk7en;  // 1'b1;
-      3'b000 : clkcpu_enable = clk35en && !CPUContention;
-      3'b001 : clkcpu_enable = clk7en;
-      3'b010 : clkcpu_enable = clk7en;  // clk14en;
-      3'b011 : clkcpu_enable = clk7en;  // 1'b1;
-    endcase */
-  end
+always @* clkcpu_enable = clk35en && !CPUContention;
 
-`else
-  always @*
-    clkcpu_enable = clk35en && !CPUContention;  
-`endif
-    
 endmodule

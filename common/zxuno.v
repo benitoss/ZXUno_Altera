@@ -63,12 +63,15 @@ module zxuno (
   output wire uart_tx,
   input wire uart_rx,
   output wire uart_rts,
-  
-  // SRAM
-  output wire [20:0] sram_addr,
-  inout wire [7:0] sram_data,
-  output wire sram_we_n,
 
+  // RAM
+  input  wire        ram_busy_n,
+  output wire        ram_rfsh_n,
+  output wire        ram_rd_n,
+  output wire        ram_wr_n,
+  output wire [20:0] ram_a,
+  input  wire [ 7:0] ram_d,
+  output wire [ 7:0] ram_q,
 
   // Flash SPI
   output wire flash_cs_n,
@@ -388,7 +391,7 @@ module zxuno (
     .reset_n(rst_n & mrst_n & power_on_reset_n & reset_button_n & reset_master_button_n),  // cualquiera de los tres resets
 	 .clk(sysclk),
     .clkcpuen(clkcpu_enable & wait_spi_n),
-    .wait_n(1'b1),
+    .wait_n(ram_busy_n),
     .int_n(int_n),
     .nmi_n(( (nmi_n & nmi_button_n ) | enable_nmi_n ) /*& nmispecial_n*/),
 	 .di(cpudin),
@@ -572,11 +575,13 @@ module zxuno (
     .data_to_pzx(data_to_pzx),
     .write_data_pzx(write_data_pzx),
   
-  // Interface con la SRAM
-  // SRAM version	 
-	 .sram_addr(sram_addr),
-    .sram_data(sram_data),
-    .sram_we_n(sram_we_n)
+  // Interface con la RAM
+    .ram_rfsh_n(ram_rfsh_n),
+    .ram_rd_n(ram_rd_n),
+    .ram_wr_n(ram_wr_n),
+    .ram_a(ram_a),
+    .ram_d(ram_d),
+    .ram_q(ram_q)
   );
   
   ps2_keyb el_teclado (

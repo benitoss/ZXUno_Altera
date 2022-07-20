@@ -57,7 +57,7 @@ module coreid (
         end
         else if (reading == 1'b1 && oe==1'b0) begin
             reading <= 1'b0;
-            textindx <= textindx + 1;
+            textindx <= textindx + 1'd1;
         end
         dout <= text[textindx];
     end
