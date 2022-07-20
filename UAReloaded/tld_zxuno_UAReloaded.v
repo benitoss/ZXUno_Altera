@@ -63,26 +63,22 @@ module tld_zxuno_UAReloaded (
 
    //output wire stdn,
    //output wire stdnb,
-   
-`ifdef CPU_SDRAM_SLOW_OPTION
-   // SDRAM lines
-	output wire       sdramCk,
-	output wire       sdramCe,
-	output wire       sdramCs,
-	output wire       sdramWe,
-	output wire       sdramRas,
-	output wire       sdramCas,
-	output wire[ 1:0] sdramDqm,
-	inout  wire[15:0] sdramDQ,
-	output wire[ 1:0] sdramBA,
-	output wire[12:0] sdramA,
- `else 
-   // SRAM Lines
-   output wire [19:0] sram_addr,
-   inout wire [7:0] sram_data,
-   output wire sram_we_n,
- `endif
-     
+
+   output wire       dramCk,
+   output wire       dramCe,
+   output wire       dramCs,
+   output wire       dramWe,
+   output wire       dramRas,
+   output wire       dramCas,
+   output wire[ 1:0] dramDQM,
+   inout  wire[15:0] dramDQ,
+   output wire[ 1:0] dramBA,
+   output wire[12:0] dramA,
+
+// output wire        sram_we_n,
+// output wire [20:0] sram_addr,
+// inout  wire [ 7:0] sram_data,
+
 //   output wire flash_cs_n,
 //   output wire flash_clk,
 //   output wire flash_mosi,
@@ -136,11 +132,12 @@ module tld_zxuno_UAReloaded (
 //    .sysclk             (sysclk)
 //    );
  
-   wire locked;
+   wire sdrclk, locked;
 
    relojes	relojes_inst (
 			.inclk0 	( clk50mhz ),
 			.c0 		( sysclk ),
+			.c1 		( sdrclk ),
 			.locked 	( locked )
 	);
 
@@ -153,20 +150,27 @@ module tld_zxuno_UAReloaded (
    
 //   wire joy1up, joy1down, joy1left, joy1right, joy1fire1, joy1fire2;
 //   wire joy2up, joy2down, joy2left, joy2right, joy2fire1, joy2fire2;
- `ifndef CPU_SDRAM_SLOW_OPTION 
-   wire [20:0] sram_addr_int;
-   assign sram_addr = sram_addr_int[19:0];
-  `endif 
-  
+
 	wire [15:0] audio_left_i2s;
 	wire [15:0] audio_right_i2s;
    
 //	wire midi_o;
 //   assing midi_out =	~ midi_o;
 
+wire       ram_rfsh_n;
+wire       ram_rd_n;
+wire       ram_wr_n;
+wire[20:0] ram_a;
+wire[ 7:0] ram_d = sdrq[7:0];
+wire[ 7:0] ram_q;
+
+//assign sram_addr = ram_a;
+//assign sram_data = ram_we_n ? 8'bZ : ram_q;
+//assign sram_we_n = ram_we_n;
+
    zxuno #(.FPGA_MODEL(3'b010), .MASTERCLK(28000000)) la_maquina (
     .sysclk(sysclk),
-    .power_on_reset_n(1'b1),  // s�lo para simulaci�n. Para implementacion, dejar a 1
+    .power_on_reset_n(sdrrdy),  // s�lo para simulaci�n. Para implementacion, dejar a 1
     .r(ri),
     .g(gi),
     .b(bi),
@@ -193,10 +197,14 @@ module tld_zxuno_UAReloaded (
     .uart_rx(1'b1),
     .uart_rts(),
 
-    .sram_addr(sram_addr_int),
-    .sram_data(sram_data),
-    .sram_we_n(sram_we_n),
-  		
+    .ram_busy_n(~sdrbsy),
+    .ram_rfsh_n(ram_rfsh_n),
+    .ram_rd_n(ram_rd_n),
+    .ram_wr_n(ram_wr_n),
+    .ram_a(ram_a),
+    .ram_d(ram_d),
+    .ram_q(ram_q),
+
     .flash_cs_n(flash_cs_n),
     .flash_clk(flash_clk),
     .flash_di(flash_mosi),
@@ -233,6 +241,37 @@ module tld_zxuno_UAReloaded (
     .ad724_mode(),
     .ad724_enable_gencolorclk()
     );
+
+wire sdrrdy;
+wire sdrbsy;
+wire[15:0] sdrd = {2{ram_q}};
+wire[15:0] sdrq;
+
+sdram SDRAM
+(
+	.clock  (sdrclk),
+	.reset  (locked),
+	.ready  (sdrrdy),
+	.busy   (sdrbsy),
+
+	.refresh (ram_rfsh_n),
+	.write   (ram_wr_n),
+	.read    (ram_rd_n),
+	.portA   ({ 3'd0, ram_a }),
+	.portD   (sdrd),
+	.portQ   (sdrq),
+
+	.sdramCk (dramCk ),
+	.sdramCe (dramCe ),
+	.sdramCs (dramCs ),
+	.sdramRas(dramRas),
+	.sdramCas(dramCas),
+	.sdramWe (dramWe ),
+	.sdramDqm(dramDQM),
+	.sdramDQ (dramDQ ),
+	.sdramBA (dramBA ),
+	.sdramA  (dramA  )
+);
 
 	
 `ifdef MONOCHROMERGB

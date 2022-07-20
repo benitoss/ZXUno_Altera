@@ -1,10 +1,28 @@
 //-------------------------------------------------------------------------------------------------
+//  SDRAM controller
+//  Copyright (C) 2022 Kyp069 <kyp069@gmail.com>
+//
+//  This program is free software; you can redistribute it and/or modify it
+//  under the terms of the GNU General Public License as published by the Free
+//  Software Foundation; either version 2 of the License, or (at your option)
+//  any later version.
+//
+//  This program is distributed in the hope that it will be useful, but WITHOUT
+//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+//  more details.
+//
+//  You should have received a copy of the GNU General Public License along
+//  with this program; if not, write to the Free Software Foundation, Inc.,
+//  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//-------------------------------------------------------------------------------------------------
 module sdram
 //-------------------------------------------------------------------------------------------------
 (
 	input  wire       clock,
 	input  wire       reset,
-	output reg        ready,
+	output wire       ready,
+	output wire       busy,
 
 	input  wire       refresh,
 	input  wire       write,
@@ -28,9 +46,11 @@ module sdram
 `include "sdram_cmd.v"
 //-------------------------------------------------------------------------------------------------
 
+assign ready = state != sINIT;
+assign busy = state != sIDLE;
+
 assign sdramCk = clock;
 assign sdramCe = 1'b1;
-
 assign sdramDQ = sdramWe ? 16'bZ : portD;
 
 //-----------------------------------------------------------------------------
@@ -40,8 +60,7 @@ reg rd = 1'b0, rd2 = 1'b0;
 reg wr = 1'b0, wr2 = 1'b0;
 reg rf = 1'b0, rf2 = 1'b0;
 
-always @(negedge clock)
-begin
+always @(negedge clock) begin
 	rs2 <= reset;
 	rs  <= !reset && rs2;
 
@@ -69,64 +88,53 @@ reg[2:0] state = 1'd0;
 
 always @(posedge clock)
 if(rs) state <= sINIT;
-else
-begin
-	NOP;														// default state is NOP
+else begin
+	NOP;													// default state is NOP
 	if(counting) count <= count+1'd1; else count <= 1'd0;
 
 	case(state)
-	sINIT:
-	begin
+	sINIT: begin
 		counting <= 1'b1;
 
 		case(count)
-		 0: ready <= 1'b0;
-		 4: PRECHARGE(1'b1);									// PRECHARGE: all, tRP's minimum value is 20ns
-		 8: REFRESH;											// REFRESH, tRFC's minimum value is 60ns
-		12: REFRESH;											// REFRESH, tRFC's minimum value is 60ns
-		16: LMR(13'b000_1_00_010_0_000);						// LDM: CL = 2, BT = seq, BL = 1, 20ns
-		31:
-		begin
-			ready <= 1'b1;
-			state <= sIDLE;
-		end
+			4: PRECHARGE(1'b1);								// PRECHARGE: all, tRP's minimum value is 20ns
+			8: REFRESH;										// REFRESH, tRFC's minimum value is 60ns
+			12: REFRESH;									// REFRESH, tRFC's minimum value is 60ns
+			16: LMR(13'b000_1_00_010_0_000);				// LDM: CL = 2, BT = seq, BL = 1, 20ns
+			31: state <= sIDLE;
 		endcase
 	end
-	sIDLE:
-	begin
+	sIDLE: begin
 		counting <= 1'b0;
 
 		if(rd) state <= sREAD; else
 		if(wr) state <= sWRITE; else
 		if(rf) state <= sREFRESH;
 	end
-	sREAD:
-	begin
+	sREAD: begin
 		counting <= 1'b1;
 
 		case(count)
-		0: ACTIVE(portA[23:22], portA[21:9]);
-		3: READ(2'b00, 2'b00, portA[8:0], 1'b1);
-		6: portQ <= sdramDQ;
-		7: state <= sIDLE;
+			0: ACTIVE(portA[23:22], portA[21:9]);
+			3: READ(2'b00, 2'b00, portA[8:0], 1'b1);
+			6: portQ <= sdramDQ;
+			7: state <= sIDLE;
 		endcase
 	end
-	sWRITE:
-	begin
+	sWRITE: begin
 		counting <= 1'b1;
 
 		case(count)
-		0: ACTIVE(portA[23:22], portA[21:9]);
-		3: WRITE(2'b00, 2'b00, portA[8:0], 1'b1);
-		7: state <= sIDLE;
+			0: ACTIVE(portA[23:22], portA[21:9]);
+			3: WRITE(2'b00, 2'b00, portA[8:0], 1'b1);
+			7: state <= sIDLE;
 		endcase
 	end
-	sREFRESH:
-	begin
+	sREFRESH: begin
 		counting <= 1'b1;
 		case(count)
-		1: REFRESH;
-		7: state <= sIDLE;
+			1: REFRESH;
+			7: state <= sIDLE;
 		endcase
 	end
 	endcase
