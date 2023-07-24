@@ -101,7 +101,7 @@ module scandoubler_ctrl (
       
     if (zxuno_addr == SCANDBLCTRL && zxuno_regwr == 1'b1) begin
       scandblctrl <= din;
-      cpu_speed_reg <= {4'b00, din[7:6]};
+      cpu_speed_reg <= {2'b00, din[7:6]};
     end
     else if (iorq_n == 1'b0 && wr_n == 1'b0 && a == PRISMSPEEDCTRL && din[7:4] == 4'b0000) begin
       scandblctrl <= {din[1:0], scandblctrl[5:0]};

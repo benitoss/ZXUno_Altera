@@ -47,10 +47,6 @@
 `define ZXUNO_DMA_SUPPORT
 `define ULA_TIMEX_SUPPORT
 
-// Active only one CPU OPTION
-`define CPU_TURBO_OPTION     		// for SRAM
-//`define CPU_SDRAM_SLOW_OPTION  	// for SDRAM
-
 // Active only with splitter in Joystics 
 //`define JOYSPLITTER_SUPPORT
 
@@ -106,7 +102,7 @@
 // ZXUNO registers for SPI devices (flash)
   localparam
       SPIPORT = 8'h02,     // registro de lectura/escritura SPI
-      CSPIN   = 8'h03;     // bit 0: estado/control de la señal FLASH_CS
+      CSPIN   = 8'h03;     // bit 0: estado/control de la seï¿½al FLASH_CS
 
 // ZXUNO registers for PS/2 keyboard handling
   localparam

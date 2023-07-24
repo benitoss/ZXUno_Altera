@@ -198,7 +198,7 @@ module ula_radas (
     reg CALoad;
     reg VideoEnable;
 
-    wire RadasEnabled;  // =1 is el modo radastaniano está habilitado
+    wire RadasEnabled;  // =1 is el modo radastaniano estï¿½ habilitado
     
     // BitmapData register
     reg [7:0] BitmapData = 8'h00;
@@ -279,7 +279,7 @@ module ula_radas (
     
     // AttrOutput register
     reg [7:0] AttrOutput = 8'h00;
-    reg [7:0] BorderColorDelayed;  // used to delay 0.5T the assignment from border to AttrOutput while in Pentagon mode. De donde he sacado esta información???
+    reg [7:0] BorderColorDelayed;  // used to delay 0.5T the assignment from border to AttrOutput while in Pentagon mode. De donde he sacado esta informaciï¿½n???
     wire [2:0] StdPaperColour = AttrOutput[5:3];
     wire [2:0] StdInkColour = AttrOutput[2:0];
     wire Bright = AttrOutput[6];
@@ -448,9 +448,9 @@ module ula_radas (
    
    // ULA snow effect added. Only for 48K ULA.
    /*
-   En el primer par de bytes leidos sólo puede haber corrupción por valor de R en bus. Esto ocurriría en el ciclo 8. 
-   La corrupción desaparece en el ciclo 11 si no se fuerza por la condicion siguiente.
-   En el segundo par de bytes leidos puede haber corrupción por lo anterior (ciclo 12), o por RAS forzado a bajo (ciclo 11).
+   En el primer par de bytes leidos sï¿½lo puede haber corrupciï¿½n por valor de R en bus. Esto ocurrirï¿½a en el ciclo 8. 
+   La corrupciï¿½n desaparece en el ciclo 11 si no se fuerza por la condicion siguiente.
+   En el segundo par de bytes leidos puede haber corrupciï¿½n por lo anterior (ciclo 12), o por RAS forzado a bajo (ciclo 11).
    */
    reg [6:0] dram_row_for_ula_snow = 7'h00;
    reg snow_is_about_to_happen = 1'b0;
@@ -476,7 +476,7 @@ module ula_radas (
    end
 `endif
    
-   wire [8:0] hcd = hc + 9'hFF8;  // hc delayed 8 ticks
+   wire [8:0] hcd = hc + 9'h1F8;  // hc delayed 8 ticks
    always @* begin
      if (!RadasEnabled) begin
          if (BitmapAddr) begin
@@ -525,7 +525,7 @@ module ula_radas (
       AttrAddr = 1'b0;
       CALoad = 1'b0;
       
-      if (!RadasEnabled) begin   // Control para los modos estándar
+      if (!RadasEnabled) begin   // Control para los modos estï¿½ndar
       
          if (hc>=(BHPIXEL+8) && hc<=(EHPIXEL+8) && vc>=BVPIXEL && vc<=EVPIXEL) begin  // VidEN_n is low here: paper area
             VideoEnable = 1'b1;
@@ -558,12 +558,12 @@ module ula_radas (
       end
 `ifdef ULA_RADASTAN_SUPPORT      
       else begin  // Control para el modo radastaniano
-         if (hc[1:0]==2'b11) begin   // trasladamos dos píxeles a la salida
+         if (hc[1:0]==2'b11) begin   // trasladamos dos pï¿½xeles a la salida
             AttrOutputLoad = 1'b1;
          end
          if (hc>=(BHPIXEL+8) && hc<=(EHPIXEL+8) && vc>=BVPIXEL && vc<=EVPIXEL) begin  // VidEN_n is low here: paper area
             VideoEnable = 1'b1;
-            if (hc[1:0]==2'b01) begin  // sólo durante video activo: se lee la memoria de pantalla
+            if (hc[1:0]==2'b01) begin  // sï¿½lo durante video activo: se lee la memoria de pantalla
                AttrDataLoad = 1'b1;
             end
          end
@@ -755,7 +755,7 @@ module ula_radas (
 ///////////////////////////////////
 
     reg MayContend_n;
-    always @(posedge sysclk) begin  // esto era negedge clk7 en el esquemático
+    always @(posedge sysclk) begin  // esto era negedge clk7 en el esquemï¿½tico
       if (clk7en_n) begin
         if (hc[3:0]>4'd3 && Border_n==1'b1)
           MayContend_n <= 1'b0;
